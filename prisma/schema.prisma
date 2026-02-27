@@ -1,0 +1,78 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+model Cliente {
+    id          Int      @id @default(autoincrement())
+    nome        String   @db.VarChar(100)
+    telefone    String   @unique
+    email       String   @unique
+    cpf         String   @unique
+    cep         String?   @db.Char(8)
+    logradouro  String?
+    bairro      String?
+    localidade  String?
+    uf          String?  @db.Char(2)
+    ativo       Boolean  @default(true)
+
+
+    //1:N
+    pedidos     Pedido[]
+
+    @@map("cliente")
+}
+
+model Produto {
+    id          Int      @id @default(autoincrement())
+    nome        String
+    descricao   String
+    categoria   TipoCategoria
+    preco       Decimal  @db.Decimal(10,2)
+    disponivel  Boolean  @default(true)
+
+    itensPedidos     ItemPedido[]
+
+    @@map("produto")
+}
+
+enum TipoCategoria {
+    LANCHE
+    BEBIDA
+    SOBREMESA
+    COMBO
+}
+
+model Pedido {
+    id          Int      @id @default(autoincrement())
+    clienteId   Int
+    cliente     Cliente  @relation(fields: [clienteId], references: [id])
+    total       Decimal  @db.Decimal(10,2)
+    status      TipoStatus
+    criadoEm    DateTime @default(now())
+
+    itensPedidos     ItemPedido[]
+
+    @@map("pedido")
+}
+
+enum TipoStatus {
+    ABERTO
+    PAGO
+    CANCELADO
+}
+
+model ItemPedido {
+    id             Int      @id @default(autoincrement())
+    pedidoId       Int
+    pedido         Pedido   @relation(fields: [pedidoId], references: [id])
+    produtoId      Int
+    produto        Produto  @relation(fields: [produtoId], references: [id])
+    quantidade     Int
+    precoUnitario  Decimal  @db.Decimal(10,2)
+
+    @@map("itemPedido")
+}
