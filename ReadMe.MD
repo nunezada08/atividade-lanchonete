@@ -1,48 +1,21 @@
-# Lanchonete “Sabor & Código” 🍔
-Minha equipe foi contratada para desenvolver somente o backend (API REST) utilizando o template fornecido pelo professor, seguindo Arquitetura MVC, Boas práticas de desenvolvimento, Aplicação rigorosa de regras de negócio, Tratamento adequado de erros e Código limpo (Clean Code)
+# 🍔 Sistema Backend para Lanchonete "Sabor & Código"
 
-# 2. Ajustar package.json
-- Adicionar: "type": "module"
-- Adicionar: "main": "server.js"
-- Adicionar dentro do script: "dev": "nodemon server.js"
+> Minha equipe foi contratada para desenvolver somente o API REST desenvolvida para o gerenciamento de clientes, produtos e pedidos de uma lanchonete, aplicando rigorosamente Arquitetura MVC, Clean Code e integração com APIs externas.
 
-# 3. Instalar dependência
-- npm i express dotenv pg @prisma/client @prisma/adapter-pg
-- npm i -D nodemon prisma
+## 🎯 Contexto
 
-# 4. Inicializar Prisma
-- npx prisma init --datasource-provider postgresql
+Este projeto consiste no desenvolvimento exclusivo do backend (API REST) do sistema "Sabor & Código". O objetivo é entregar uma aplicação robusta baseada no template fornecido, garantindo boas práticas de desenvolvimento, aplicação estrita de regras de negócio, tratamento adequado de erros e código limpo.
 
-# 5. Configurar `.env`
-- DATABASE_URL="postgresql://usuario:senha@localhost:porta/nome_do_banco_db"
+---
 
-# 6. Configurar schema.prisma
-- crie suas tabelas
+## 🏗 Arquitetura e Estrutura de Pastas
 
-# 7. Gerar SQL
-- npx prisma migrate dev --name init
-- npx prisma generate
+O projeto segue o padrão **MVC (Model-View-Controller)** adaptado para APIs, garantindo separação de responsabilidades:
 
-# 8. Semear dados no banco
-- npx prisma db seed
-
-# 9. Abrir Prisma Studio
-- npx prisma studio
-
-## Casos de erros
-
-### Após alterar schema.prisma
-- npx prisma migrate dev --name nome_da_alteracao (exemplo: adicionar_tabela_users)
-
-### Banco inconsistente (⚠️ APAGA TUDO)
-- npx prisma migrate reset
-
-### Apenas popular dados
-- npx prisma db seed
-
-### Dicas
-|   Comando       | Apaga dados?    | Cria migrations? | Uso            |
-| --------------- | ------------    | ---------------- | -------------- |
-| `migrate dev`   | ❌ Não          | ✅ Sim          | Alterar schema |
-| `db seed`       | ❌ Não          | ❌ Não          | Popular dados  |
-| `migrate reset` | ✅ SIM          | ❌ Não          | DEV only       |
+```text
+src/
+ ├── controllers/ # Validações, comunicação HTTP e respostas padronizadas.
+ ├── models/      # Regras de negócio, filtros e acesso ao banco de dados.
+ ├── routes/      # Definição e roteamento dos endpoints.
+ ├── utils/       # Funções auxiliares (ex: formatação, utilitários).
+ └── server.js    # Ponto de entrada da aplicação.
