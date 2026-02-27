@@ -11,7 +11,7 @@ export default class ProdutoModel {
     }
 
     async criar() {
-        return prisma.produto.create({
+        const registo = await prisma.produto.create({
             data: {
                 nome: this.nome,
                 descricao: this.descricao,
@@ -19,7 +19,9 @@ export default class ProdutoModel {
                 preco: this.preco,
                 disponivel: this.disponivel
             },
-        });
+        })
+        this.id = registro.id; 
+        return registro
     }
 
     async atualizar() {
@@ -36,16 +38,22 @@ export default class ProdutoModel {
     static async buscarTodos(filtros = {}) {
         const where = {};
 
-        if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'insensitive' };
-        if (filtros.estatus !== undefined) where.estatus = filtros.estatus === 'true';
-        if (filtros.preco !== undefined) where.preco = parseFloat(filtros.preco);
 
-        return prisma.exemplo.findMany({ where });
+        return prisma.produto.findMany({ where });
     }
 
     static async buscarPorId(id) {
-        const data = await prisma.exemplo.findUnique({ where: { id } });
-        if (!data) return null;
-        return new ExemploModel(data);
+        if (!this.id) throw new Error('ID não definido para busca');
+        const registro = await prisma.produto.findUnique({
+            where: { id: this.id }
+        })
+        if (!registro) return null;
+        this.id = registro.id;
+        thid.nome = registro.nome;
+        this.descricao = registro.descricao;
+        this.categoria = registro.categoria;
+        this.preco = registro.preco;
+        this.disponivel = registro.disponivel;
+        return this;
     }
 }
