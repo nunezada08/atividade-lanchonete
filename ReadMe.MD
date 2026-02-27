@@ -1,5 +1,5 @@
-# 1. Criar projeto
-- npm init -y
+# Lanchonete “Sabor & Código” 🍔
+Minha equipe foi contratada para desenvolver somente o backend (API REST) utilizando o template fornecido pelo professor, seguindo Arquitetura MVC, Boas práticas de desenvolvimento, Aplicação rigorosa de regras de negócio, Tratamento adequado de erros e Código limpo (Clean Code)
 
 # 2. Ajustar package.json
 - Adicionar: "type": "module"
