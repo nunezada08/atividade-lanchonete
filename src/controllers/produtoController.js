@@ -23,7 +23,7 @@ export const criar = async (req, res) => {
 
 export const buscarTodos = async (req, res) => {
     try {
-        const registros = await ProdutoModel.buscarTodos(req.query);
+        const registros = await ProdutoModel.buscarTodos(req.query); 
 
         if (!registros || registros.length === 0) {
             return res.status(200).json({ message: 'Nenhum registro encontrado.' });

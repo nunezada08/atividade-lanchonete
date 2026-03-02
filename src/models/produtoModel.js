@@ -20,7 +20,7 @@ export default class ProdutoModel {
                 disponivel: this.disponivel
             },
         })
-        this.id = registro.id; 
+        this.id = registro.id;
         return registro
     }
 
@@ -36,15 +36,18 @@ export default class ProdutoModel {
     }
 
     static async buscarTodos(filtros = {}) {
+        const { nome, categoria, disponivel, precoMin, precoMax } = filtros;
         const where = {};
 
-        if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'insensitive' };
-        if (filtros.estatus !== undefined) where.estatus = filtros.estatus === 'true';
-        if (filtros.preco !== undefined) where.preco = parseFloat(filtros.preco);
+        if (nome) where.nome = { contains: filtros.nome, mode: 'insensitive' };
+        if (filtros.nome) where.categoria = { contains: filtros.categoria, mode: 'insensitive' };
+        if (filtros.disponivel !== undefined) where.disponivel = filtros.disponivel === 'true';
+
+
 
         return prisma.produto.findMany({ where });
     }
- 
+
     static async buscarPorId(id) {
         const data = await prisma.produto.findUnique({ where: { id } });
         if (!data) return null;
