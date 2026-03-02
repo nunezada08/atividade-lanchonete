@@ -18,7 +18,15 @@ export default class ProdutosModel {
     }
 
     async criar() {
-        const registro = await prisma.produtos.create({
+
+        if (this.preco <= 0) {
+            throw new Error('O preco deve ser maior que 0');
+        }
+        if (this.disponivel === false) {
+            throw new Error('Produto não pode ser adicionado com disponivel = false');
+        }
+
+        const registro = await prisma.produto.create({
             data: {
                 nome: this.nome,
                 descricao: this.descricao,
@@ -27,13 +35,6 @@ export default class ProdutosModel {
                 disponivel: this.disponivel,
             },
         });
-
-        if (this.preco <= 0) {
-            throw new Error('O preco deve ser maior que 0');
-        }
-        if ((this.disponivel = false)) {
-            throw new Error('Produto só pode ser adicionado com disponivel = false');
-        }
 
         this.id = registro.id;
         return registro;
