@@ -1,13 +1,12 @@
 import express from 'express';
 import 'dotenv/config';
-import exemplosRoutes from './routes/exemploRoute.js';
 import produtoRoutes from './routes/produtoRoutes.js';
-import LanchoneteRoutes from './routes/clienteRoutes.js';
+import clienteRoutes from './routes/clienteRoutes.js';
 
 const app = express();
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 app.get('/', (req, res) => {
     res.send('🚀 API funcionando');
