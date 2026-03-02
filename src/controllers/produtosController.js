@@ -16,17 +16,28 @@ export const criar = async (req, res) => {
             status: 400,
             error: 'O campo "preco" é obrigatório!'
         });
+        if (!descricao)
+            return res.status(400).json({
+                status: 400,
+                error: 'O campo "descricao" é obrigatório',
+            });
         if (!categoria) return res.status(400).json({
             status: 400,
             error: 'O campo "categoria" é obrigatório'
         })
-        if (disponivel === null) return res.status(400).json({
+        if (!disponivel || disponivel === null || disponivel === undefined) return res.status(400).json({
             status: 400,
             error: 'O campo "disponível" é obrigatório'
         })
 
-        const exemplo = new ExemploModel({ nome, estatus, preco: parseFloat(preco) });
-        const data = await exemplo.criar();
+        const produtos = new ProdutosModel({
+            nome,
+            descricao,
+            categoria,
+            preco: parseFloat(preco),
+            disponivel
+        });
+        const data = await produtos.criar();
 
         res.status(201).json({ message: 'Registro criado com sucesso!', data });
     } catch (error) {
