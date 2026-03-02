@@ -1,47 +1,113 @@
 import prisma from '../utils/prismaClient.js';
 
-export default class ExemploModel {
-    constructor({ id = null, nome = null, estatus = true, preco = null } = {}) {
+export default class ItemPedidoModel {
+    constructor({ id = null, pedidoId, produtoId, quantidade, precoUnitario = null } = {}) {
         this.id = id;
-        this.nome = nome;
-        this.estatus = estatus;
-        this.preco = preco;
+        this.pedidoId = pedidoId;
+        this.produtoId = produtoId;
+        this.quantidade = quantidade;
+        this.precoUnitario = precoUnitario;
+    }
+
+    // Validações de regra de negócio
+    validar() {
+        if (!this.pedidoId || !this.produtoId || !this.quantidade) {
+            throw new Error('pedidoId, produtoId e quantidade são obrigatórios');
+        }
+
+        if (this.quantidade <= 0) {
+            throw new Error('A quantidade deve ser maior que 0');
+        }
+
+        return true;
     }
 
     async criar() {
-        return prisma.exemplo.create({
+        this.validar();
+
+        // Se o precoUnitario não foi informado, buscar do produto
+        if (!this.precoUnitario) {
+            const produto = await prisma.produto.findUnique({
+                where: { id: this.produtoId },
+            });
+
+            if (!produto) {
+                throw new Error('Produto não encontrado');
+            }
+
+            this.precoUnitario = produto.preco;
+        }
+
+        return prisma.itemPedido.create({
             data: {
-                nome: this.nome,
-                estatus: this.estatus,
-                preco: this.preco,
+                pedidoId: this.pedidoId,
+                produtoId: this.produtoId,
+                quantidade: this.quantidade,
+                precoUnitario: this.precoUnitario,
+            },
+            include: {
+                produto: true,
+                pedido: true,
             },
         });
     }
 
     async atualizar() {
-        return prisma.exemplo.update({
+        this.validar();
+
+        return prisma.itemPedido.update({
             where: { id: this.id },
-            data: { nome: this.nome, estatus: this.estatus, preco: this.preco },
+            data: {
+                quantidade: this.quantidade,
+                precoUnitario: this.precoUnitario,
+            },
+            include: {
+                produto: true,
+                pedido: true,
+            },
         });
     }
 
     async deletar() {
-        return prisma.exemplo.delete({ where: { id: this.id } });
+        return prisma.itemPedido.delete({
+            where: { id: this.id },
+        });
     }
 
     static async buscarTodos(filtros = {}) {
         const where = {};
 
-        if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'insensitive' };
-        if (filtros.estatus !== undefined) where.estatus = filtros.estatus === 'true';
-        if (filtros.preco !== undefined) where.preco = parseFloat(filtros.preco);
+        if (filtros.pedidoId) where.pedidoId = parseInt(filtros.pedidoId);
+        if (filtros.produtoId) where.produtoId = parseInt(filtros.produtoId);
 
-        return prisma.exemplo.findMany({ where });
+        return prisma.itemPedido.findMany({
+            where,
+            include: {
+                produto: true,
+                pedido: true,
+            },
+        });
     }
 
     static async buscarPorId(id) {
-        const data = await prisma.exemplo.findUnique({ where: { id } });
+        const data = await prisma.itemPedido.findUnique({
+            where: { id },
+            include: {
+                produto: true,
+                pedido: true,
+            },
+        });
+
         if (!data) return null;
-        return new ExemploModel(data);
+        return new ItemPedidoModel(data);
+    }
+
+    static async buscarPorPedido(pedidoId) {
+        return prisma.itemPedido.findMany({
+            where: { pedidoId },
+            include: {
+                produto: true,
+            },
+        });
     }
 }
