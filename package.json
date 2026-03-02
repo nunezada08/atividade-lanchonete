@@ -6,7 +6,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "cls && nodemon src/server.js"
+    "dev": "cls && nodemon src/server.js",
+    "seed": "prisma db seed"
   },
   "keywords": [],
   "author": "Nunes/Melissa/Juia/Murilo/Isabella/Felipe",
