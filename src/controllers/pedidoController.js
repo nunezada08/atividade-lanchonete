@@ -6,13 +6,12 @@ export const criar = async (req, res) => {
             return res.status(400).json({ error: 'Corpo da requisição vazio. Envie os dados!' });
         }
 
-        const { cliente, status, total } = req.body;
+        const { cliente } = req.body;
 
         if (!cliente) return res.status(400).json({ error: 'O campo "cliente" é obrigatório!' });
-        if (total === undefined || total === null)
-            return res.status(400).json({ error: 'O campo "total" é obrigatório!' });
+        // status e total não são aceitos pela API de criação; são controlados internamente
 
-        const pedido = new PedidoModel({ cliente, status, total: parseFloat(total) });
+        const pedido = new PedidoModel({ cliente });
         const data = await pedido.criar();
 
         res.status(201).json({ message: 'Registro criado com sucesso!', data });
@@ -96,10 +95,19 @@ export const atualizar = async (req, res) => {
         }
 
         if (req.body.cliente !== undefined) pedido.cliente = req.body.cliente;
-        if (req.body.status !== undefined) pedido.status = req.body.status;
-        if (req.body.total !== undefined) pedido.total = parseFloat(req.body.total);
+
+        if (req.body.status !== undefined) {
+            // valida transição permitida
+            PedidoModel.validarMudancaStatus(pedido, req.body.status);
+            pedido.status = req.body.status;
+        }
+
+        // total não pode ser atualizado manualmente
 
         const data = await pedido.atualizar();
+
+        // sempre recalcula total após alterações para garantia
+        await PedidoModel.calcularTotal(pedido.id);
 
         res.json({ message: `O pedido "${data.cliente}" foi atualizado com sucesso!`, data });
     } catch (error) {
@@ -118,6 +126,11 @@ export const deletar = async (req, res) => {
 
         if (!pedido) {
             return res.status(404).json({ error: 'Registro não encontrado para deletar.' });
+        }
+
+        // opcional: permitir exclusão somente se aberto
+        if (pedido.status !== 'ABERTO') {
+            return res.status(400).json({ error: 'Só é possível deletar pedidos em aberto.' });
         }
 
         await pedido.deletar();
