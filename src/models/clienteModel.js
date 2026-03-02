@@ -82,7 +82,7 @@ export default class ClienteModel {
         if (!data) return null;
         return new ClienteModel(data);
     }
-    
+
     async atualizar() {
         try {
             return await prisma.cliente.update({
