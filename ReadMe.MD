@@ -1,6 +1,6 @@
 # 🍔 Sistema Backend para Lanchonete "Sabor & Código"
 
-> Minha equipe foi contratada para desenvolver somente o API REST desenvolvida para o gerenciamento de clientes, produtos e pedidos de uma lanchonete, aplicando rigorosamente Arquitetura MVC, Clean Code e integração com APIs externas.
+> Nossa equipe foi contratada para desenvolver somente o API REST desenvolvida para o gerenciamento de clientes, produtos e pedidos de uma lanchonete, aplicando rigorosamente Arquitetura MVC, Clean Code e integração com APIs externas.
 
 
 ## 🎯 Contexto
