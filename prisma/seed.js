@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import pkg from '@prisma/client';
-const { PrismaClient } = pkg;
+const { PrismaClient, TipoStatus, TipoCategoria } = pkg;
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 
@@ -11,14 +11,14 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
     console.log('🌱 Iniciando seed...');
 
-    // Limpar dados existentes (ordem importa por causa das relações)
-    await prisma.itemPedido.deleteMany();
-    await prisma.pedido.deleteMany();
-    await prisma.cliente.deleteMany();
-    await prisma.produto.deleteMany();
+    // 🔥 Limpa tudo e reinicia os IDs corretamente
+    await prisma.$executeRawUnsafe(`
+    TRUNCATE TABLE "itemPedido", "pedido", "cliente", "produto"
+    RESTART IDENTITY CASCADE;
+  `);
 
     console.log('📦 Inserindo clientes...');
-    const clientes = await prisma.cliente.createMany({
+    await prisma.cliente.createMany({
         data: [
             {
                 nome: 'João Silva',
@@ -41,66 +41,100 @@ async function main() {
                 cpf: '12345678903',
                 ativo: true,
             },
-            {
-                nome: 'Ana Costa',
-                telefone: '85987654321',
-                email: 'ana@email.com',
-                cpf: '12345678904',
-                ativo: true,
-            },
-            {
-                nome: 'Carlos Ferreira',
-                telefone: '71987654321',
-                email: 'carlos@email.com',
-                cpf: '12345678905',
-                ativo: true,
-            },
         ],
     });
 
     console.log('📦 Inserindo produtos...');
-    const produtos = await prisma.produto.createMany({
+    await prisma.produto.createMany({
         data: [
             {
                 nome: 'Hambúrguer Clássico',
-                descricao: 'Hambúrguer com queijo, alface, tomate e molho especial',
-                categoria: 'LANCHE',
+                descricao: 'Hambúrguer com queijo, alface e tomate',
+                categoria: TipoCategoria.LANCHE,
                 preco: '18.50',
                 disponivel: true,
             },
             {
                 nome: 'Refrigerante 2L',
-                descricao: 'Refrigerante gelado em garrafa de 2 litros',
-                categoria: 'BEBIDA',
+                descricao: 'Garrafa 2 litros',
+                categoria: TipoCategoria.BEBIDA,
                 preco: '9.90',
                 disponivel: true,
             },
             {
                 nome: 'Pudim de Leite',
-                descricao: 'Delicioso pudim caseiro com calda de caramelo',
-                categoria: 'SOBREMESA',
+                descricao: 'Pudim caseiro',
+                categoria: TipoCategoria.SOBREMESA,
                 preco: '7.50',
                 disponivel: true,
             },
             {
-                nome: 'Pizza Mussarela',
-                descricao: 'Pizza grande com mussarela derretida e orégano',
-                categoria: 'LANCHE',
-                preco: '35.00',
-                disponivel: true,
-            },
-            {
-                nome: 'Suco Natural',
-                descricao: 'Suco natural de frutas frescas',
-                categoria: 'BEBIDA',
-                preco: '8.50',
+                nome: 'Combo Burger + Refri',
+                descricao: 'Hambúrguer + Refrigerante',
+                categoria: TipoCategoria.COMBO,
+                preco: '25.00',
                 disponivel: true,
             },
         ],
     });
 
+    console.log('📦 Inserindo pedidos...');
+    await prisma.pedido.createMany({
+        data: [
+            {
+                clienteId: 1,
+                total: '28.40',
+                status: TipoStatus.ABERTO,
+            },
+            {
+                clienteId: 2,
+                total: '25.00',
+                status: TipoStatus.PAGO,
+            },
+            {
+                clienteId: 3,
+                total: '15.00',
+                status: TipoStatus.CANCELADO,
+            },
+        ],
+    });
+
+    console.log('📦 Inserindo itens dos pedidos...');
+    await prisma.itemPedido.createMany({
+        data: [
+            // Pedido 1
+            {
+                pedidoId: 1,
+                produtoId: 1,
+                quantidade: 1,
+                precoUnitario: '18.50',
+            },
+            {
+                pedidoId: 1,
+                produtoId: 2,
+                quantidade: 1,
+                precoUnitario: '9.90',
+            },
+
+            // Pedido 2
+            {
+                pedidoId: 2,
+                produtoId: 4,
+                quantidade: 1,
+                precoUnitario: '25.00',
+            },
+
+            // Pedido 3
+            {
+                pedidoId: 3,
+                produtoId: 3,
+                quantidade: 2,
+                precoUnitario: '7.50',
+            },
+        ],
+    });
+
     console.log('✅ Seed concluído com sucesso!');
-    console.log(`📊 ${clientes.count} clientes e ${produtos.count} produtos inseridos!`);
 }
 
 main()
