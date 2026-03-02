@@ -1,49 +1,71 @@
-import ClienteModel from '../models/clienteModel.js';     
+import ClienteModel from '../models/clienteModel.js';
+
+const buscarEnderecoNoViaCep = async (cep) => {
+    // Mantemos apenas uma validação básica para não enviar lixo para a API
+    if (!cep || cep.length < 8) return null;
+
+    try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const data = await response.json();
+        return data.erro ? null : data;
+    } catch (error) {
+        throw new Error('VIA_CEP_OFFLINE');
+    }
+};
 
 export const criar = async (req, res) => {
     try {
         if (!req.body) return res.status(400).json({ error: 'Corpo vazio!' });
 
-        const { nome, telefone, email, cpf, cep, logradouro, bairro, localidade, uf } = req.body;
+        const { nome, telefone, email, cpf, cep } = req.body;
 
-        // 1. Validação amigável antes de enviar ao Prisma
-        if (!nome || !cpf || !telefone || !email || !logradouro) {
+        if (!nome || !cpf || !telefone || !email || !cep) {
             return res.status(400).json({
-                error: 'Ops! Faltam informações obrigatórias (Nome, CPF, Telefone, Email e Logradouro).',
+                error: 'Ops! Faltam informações obrigatórias (Nome, CPF, Telefone, Email e CEP).',
             });
         }
 
+        let dadosEndereco;
+        try {
+            dadosEndereco = await buscarEnderecoNoViaCep(cep);
+        } catch (err) {
+            return res.status(400).json({ error: 'Serviço de CEP indisponível.' });
+        }
+
+        if (!dadosEndereco) {
+            return res.status(400).json({ error: 'CEP inválido ou não encontrado.' });
+        }
+
+       //Montagem direta com os dados vindos da API (com pontuação se houver)
         const cliente = new ClienteModel({
             nome,
             telefone,
             email,
             cpf,
-            cep,
-            logradouro,
-            bairro,
-            localidade,
-            uf,
+            cep: dadosEndereco.cep,
+            logradouro: dadosEndereco.logradouro,
+            bairro: dadosEndereco.bairro,
+            localidade: dadosEndereco.localidade,
+            uf: dadosEndereco.uf,
         });
 
         const data = await cliente.criar();
         res.status(201).json({ message: 'Cliente criado com sucesso!', data });
+
     } catch (error) {
-        // 2. Tratando erros específicos do Prisma (P2002 = Único / P2012 = Obrigatório)
+        if (error.code === 'P2000') {
+            console.error("ERRO: Um dos campos é grande demais para o banco de dados.");
+            return res.status(400).json({
+                error: 'Erro de tamanho: Verifique se o CPF ou CEP não excedem o limite do banco.'
+            });
+        }
+
         if (error.code === 'P2002') {
-            return res.status(400).json({
-                error: 'Este CPF, Telefone ou Email já está cadastrado em nossa base.',
-            });
+            return res.status(400).json({ error: 'Dados já cadastrados (CPF/Email/Tel).' });
         }
 
-        if (error.message.includes('must not be null')) {
-            return res.status(400).json({
-                error: 'Erro de validação: Verifique se todos os campos obrigatórios foram preenchidos corretamente.',
-            });
-        }
-
-        // Erro genérico para qualquer outra falha inesperada
         console.error('Erro interno:', error);
-        res.status(500).json({ error: 'Desculpe, ocorreu um erro interno ao salvar o cliente.' });
+        res.status(500).json({ error: 'Erro interno ao salvar o cliente.' });
     }
 };
 
@@ -92,41 +114,53 @@ export const atualizar = async (req, res) => {
             return res.status(400).json({ error: 'ID inválido.' });
         }
 
-        // Buscamos o cliente e guardamos na variável 'cliente'
         const cliente = await ClienteModel.buscarPorId(idNumerico);
 
         if (!cliente) {
             return res.status(404).json({ error: 'Cliente não encontrado.' });
         }
 
-        // Atualizamos as propriedades da instância 'cliente' com os dados do body
+        if (req.body.cep && req.body.cep !== cliente.cep) {
+            const dadosEndereco = await buscarEnderecoNoViaCep(req.body.cep);
+
+            if (!dadosEndereco) {
+                return res.status(400).json({ error: 'CEP inválido ou não encontrado.' });
+            }
+
+            // Atualiza os campos de endereço com o retorno direto da API
+            cliente.cep = dadosEndereco.cep;
+            cliente.logradouro = dadosEndereco.logradouro;
+            cliente.bairro = dadosEndereco.bairro;
+            cliente.localidade = dadosEndereco.localidade;
+            cliente.uf = dadosEndereco.uf;
+        }
+
         if (req.body.nome !== undefined) cliente.nome = req.body.nome;
         if (req.body.telefone !== undefined) cliente.telefone = req.body.telefone;
         if (req.body.email !== undefined) cliente.email = req.body.email;
-        if (req.body.cep !== undefined) cliente.cep = req.body.cep;
+        if (req.body.cpf !== undefined) cliente.cpf = req.body.cpf;
+
         if (req.body.ativo !== undefined) {
             cliente.ativo = req.body.ativo === true || req.body.ativo === 'true';
         }
 
-        // Chamamos o método atualizar da instância 'cliente'
         const data = await cliente.atualizar();
 
-        if (!data) {
-            return res
-                .status(500)
-                .json({ error: 'O banco não retornou dados após a atualização.' });
-        }
-
         res.json({
-            message: `O registro "${data.nome}" foi atualizado com sucesso!`,
+            message: `Registro "${data.nome}" atualizado com sucesso!`,
             data,
         });
     } catch (error) {
-        console.error('ERRO DETALHADO NO TERMINAL:', error);
+        if (error.code === 'P2000') {
+            return res.status(400).json({
+                error: 'Erro de tamanho: O dado retornado pela API ou enviado no CPF excede o limite do banco (@db.Char).',
+            });
+        }
+
+        console.error('Erro ao atualizar:', error);
         res.status(500).json({ error: 'Erro interno ao atualizar registro.' });
     }
 };
-
 export const deletar = async (req, res) => {
     try {
         const { id } = req.params;
