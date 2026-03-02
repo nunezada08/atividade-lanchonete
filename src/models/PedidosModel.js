@@ -1,9 +1,9 @@
 import prisma from '../utils/prismaClient.js';
 
 export default class PedidoModel {
-    constructor({ id = null, nome = null, status = true, total = null } = {}) {
+    constructor({ id = null, cliente = null, status = true, total = null } = {}) {
         this.id = id;
-        this.nome = nome;
+        this.cliente = cliente;
         this.status = status;
         this.total = total;
     }
@@ -11,7 +11,7 @@ export default class PedidoModel {
     async criar() {
         return prisma.pedido.create({
             data: {
-                nome: this.nome,
+                cliente: this.cliente,
                 status: this.status,
                 total: this.total,
             },
@@ -21,7 +21,7 @@ export default class PedidoModel {
     async atualizar() {
         return prisma.pedido.update({
             where: { id: this.id },
-            data: { nome: this.nome, status: this.status, total: this.total },
+            data: { cliente: this.cliente, status: this.status, total: this.total },
         });
     }
 
@@ -32,7 +32,7 @@ export default class PedidoModel {
     static async buscarTodos(filtros = {}) {
         const where = {};
 
-        if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'insensitive' };
+        if (filtros.cliente) where.cliente = { contains: filtros.cliente, mode: 'insensitive' };
         if (filtros.status !== undefined) where.status = filtros.status === 'true';
         if (filtros.total !== undefined) where.total = parseFloat(filtros.total);
 
