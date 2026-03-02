@@ -12,7 +12,7 @@ model Cliente {
     telefone    String   @unique
     email       String   @unique
     cpf         String   @unique
-    cep         String?  @db.Char(8)
+    cep         String?  @db.Char(9)
     logradouro  String?
     bairro      String?
     localidade  String?
