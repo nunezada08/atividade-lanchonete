@@ -1,47 +1,50 @@
 import prisma from '../utils/prismaClient.js';
 
-export default class ExemploModel {
-    constructor({ id = null, nome = null, estatus = true, preco = null } = {}) {
+export default class ItemPedidoModel {
+    constructor({ id = null, pedidoId = null, produtoId = null, quantidade = 0, precoUnitario = null } = {}) {
         this.id = id;
-        this.nome = nome;
-        this.estatus = estatus;
-        this.preco = preco;
+        this.pedidoId = pedidoId;
+        this.produtoId = produtoId;
+        this.quantidade = quantidade;
+        this.precoUnitario = precoUnitario;
     }
 
     async criar() {
-        return prisma.exemplo.create({
+        return prisma.itemPedido.create({
             data: {
-                nome: this.nome,
-                estatus: this.estatus,
-                preco: this.preco,
+                pedidoId: this.pedidoId,
+                produtoId: this.produtoId,
+                quantidade: this.quantidade,
+                precoUnitario: this.precoUnitario,
             },
         });
     }
 
     async atualizar() {
-        return prisma.exemplo.update({
+        const data = {};
+        if (this.quantidade !== undefined) data.quantidade = this.quantidade;
+        if (this.precoUnitario !== undefined) data.precoUnitario = this.precoUnitario;
+
+        return prisma.itemPedido.update({
             where: { id: this.id },
-            data: { nome: this.nome, estatus: this.estatus, preco: this.preco },
+            data,
         });
     }
 
     async deletar() {
-        return prisma.exemplo.delete({ where: { id: this.id } });
+        return prisma.itemPedido.delete({ where: { id: this.id } });
     }
 
     static async buscarTodos(filtros = {}) {
         const where = {};
-
-        if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'insensitive' };
-        if (filtros.estatus !== undefined) where.estatus = filtros.estatus === 'true';
-        if (filtros.preco !== undefined) where.preco = parseFloat(filtros.preco);
-
-        return prisma.exemplo.findMany({ where });
+        if (filtros.pedidoId) where.pedidoId = parseInt(filtros.pedidoId);
+        if (filtros.produtoId) where.produtoId = parseInt(filtros.produtoId);
+        return prisma.itemPedido.findMany({ where });
     }
 
     static async buscarPorId(id) {
-        const data = await prisma.exemplo.findUnique({ where: { id } });
+        const data = await prisma.itemPedido.findUnique({ where: { id } });
         if (!data) return null;
-        return new ExemploModel(data);
+        return new ItemPedidoModel(data);
     }
 }

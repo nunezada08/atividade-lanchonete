@@ -79,18 +79,30 @@ export const atualizar = async (req, res) => {
             });
         }
 
+        const existente = await ItemPedidoModel.buscarPorId(parseInt(id));
+        if (!existente) {
+            return res.status(404).json({ error: 'Item não encontrado.' });
+        }
+
+        // verifica se o pedido ainda está aberto
+        const pedido = await PedidoModel.buscarPorId(existente.pedidoId);
+        if (pedido && pedido.status !== 'ABERTO') {
+            return res.status(400).json({ error: 'Não é possível alterar itens de um pedido que não esteja ABERTO.' });
+        }
+
         const item = new ItemPedidoModel({
             id,
-            quantidade: req.body.quantidade
+            quantidade: req.body.quantidade !== undefined ? req.body.quantidade : existente.quantidade,
+            precoUnitario: existente.precoUnitario,
         });
 
         const data = await item.atualizar();
+        await PedidoModel.calcularTotal(existente.pedidoId);
 
         res.status(200).json({
             message: 'Item atualizado com sucesso!',
             data
         });
-
     } catch (error) {
         res.status(400).json({
             error: error.message
@@ -112,9 +124,16 @@ export const deletar = async (req, res) => {
             return res.status(404).json({ error: 'Item não encontrado para deletar.' });
         }
 
-        await item.deletar();
+        // verifica status do pedido antes de apagar o item
+        const pedido = await PedidoModel.buscarPorId(item.pedidoId);
+        if (pedido && pedido.status !== 'ABERTO') {
+            return res.status(400).json({ error: 'Não é possível remover itens de um pedido que não esteja ABERTO.' });
+        }
 
-        res.json({ message: `O item "${item.nome}" foi deletado com sucesso!`, deletado: item });
+        await item.deletar();
+        await PedidoModel.calcularTotal(item.pedidoId);
+
+        res.json({ message: `O item foi deletado com sucesso!`, deletado: item });
     } catch (error) {
         console.error('Erro ao deletar:', error);
         res.status(500).json({ error: 'Erro ao deletar item.' });
