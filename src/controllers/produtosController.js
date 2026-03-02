@@ -1,4 +1,4 @@
-import ProdutoModel from '../models/produtoModel.js';
+import ProdutosModel from '../models/ProdutosModel.js';
 
 export const criar = async (req, res) => {
     try {
@@ -6,10 +6,24 @@ export const criar = async (req, res) => {
             return res.status(400).json({ error: 'Corpo da requisição vazio. Envie os dados!' });
         }
 
-        const { nome, estatus, preco } = req.body;
+        const { nome, descricao, categoria, preco, disponivel } = req.body;
 
-        if (!nome) return res.status(400).json({ error: 'O campo "nome" é obrigatório!' });
-        if (preco === undefined || preco === null) return res.status(400).json({ error: 'O campo "preco" é obrigatório!' });
+        if (!nome) return res.status(400).json({
+            status: 400,
+            error: 'O campo "nome" é obrigatório!'
+        });
+        if (preco === undefined || preco === null) return res.status(400).json({
+            status: 400,
+            error: 'O campo "preco" é obrigatório!'
+        });
+        if (!categoria) return res.status(400).json({
+            status: 400,
+            error: 'O campo "categoria" é obrigatório'
+        })
+        if (disponivel === null) return res.status(400).json({
+            status: 400,
+            error: 'O campo "disponível" é obrigatório'
+        })
 
         const exemplo = new ExemploModel({ nome, estatus, preco: parseFloat(preco) });
         const data = await exemplo.criar();
@@ -23,7 +37,7 @@ export const criar = async (req, res) => {
 
 export const buscarTodos = async (req, res) => {
     try {
-        const registros = await ProdutoModel.buscarTodos(req.query); 
+        const registros = await ProdutosModel.buscarTodos(req.query);
 
         if (!registros || registros.length === 0) {
             return res.status(200).json({ message: 'Nenhum registro encontrado.' });
@@ -44,13 +58,13 @@ export const buscarPorId = async (req, res) => {
             return res.status(400).json({ error: 'O ID enviado não é um número válido.' });
         }
 
-        const produto = await ProdutoModel.buscarPorId(parseInt(id));
+        const produtos = await ProdutosModel.buscarPorId(parseInt(id));
 
-        if (!produto) {
+        if (!produtos) {
             return res.status(404).json({ error: 'Registro não encontrado.' });
         }
 
-        res.json({ data: produto });
+        res.json({ data: produtos });
     } catch (error) {
         console.error('Erro ao buscar:', error);
         res.status(500).json({ error: 'Erro ao buscar registro.' });

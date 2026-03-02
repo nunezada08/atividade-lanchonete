@@ -21,12 +21,12 @@ model Cliente {
 
 
     //1:N
-    pedidos     Pedido[]
+    pedidos     Pedidos[]
 
     @@map("cliente")
 }
 
-model Produto {
+model Produtos {
     id          Int      @id @default(autoincrement())
     nome        String
     descricao   String
@@ -36,7 +36,7 @@ model Produto {
 
     itensPedidos     ItemPedido[]
 
-    @@map("produto")
+    @@map("produtos")
 }
 
 enum TipoCategoria {
@@ -46,17 +46,16 @@ enum TipoCategoria {
     COMBO
 }
 
-model Pedido {
+model Pedidos {
     id          Int      @id @default(autoincrement())
     clienteId   Int
     cliente     Cliente  @relation(fields: [clienteId], references: [id])
     total       Decimal  @db.Decimal(10,2)
     status      TipoStatus
     criadoEm    DateTime @default(now())
-
     itensPedidos     ItemPedido[]
 
-    @@map("pedido")
+    @@map("pedidos")
 }
 
 enum TipoStatus {
@@ -68,9 +67,9 @@ enum TipoStatus {
 model ItemPedido {
     id             Int      @id @default(autoincrement())
     pedidoId       Int
-    pedido         Pedido   @relation(fields: [pedidoId], references: [id])
+    pedido         Pedidos   @relation(fields: [pedidoId], references: [id])
     produtoId      Int
-    produto        Produto  @relation(fields: [produtoId], references: [id])
+    produto        Produtos  @relation(fields: [produtoId], references: [id])
     quantidade     Int
     precoUnitario  Decimal  @db.Decimal(10,2)
 
