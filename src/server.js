@@ -1,5 +1,6 @@
 import express from 'express';
 import 'dotenv/config';
+import clienteRoutes from './routes/clienteRoutes.js';
 import produtoRoutes from './routes/produtoRoutes.js';
 import clienteRoutes from './routes/clienteRoutes.js';
 
