@@ -3,8 +3,6 @@ import prisma from '../utils/prismaClient.js';
 //Categorias válias
         const categoriasValidas = ["LANCHE", "BEBIDA", 'SOBREMESA', "COMBO"]
 
-class ValidationError extends Error {}
-
 export default class ProdutosModel {
     constructor({
         id = null,
@@ -22,8 +20,7 @@ export default class ProdutosModel {
         this.disponivel = disponivel;
     }
 
-    async criar() {
-
+    validar() {
         //Regras de negócio
 
         if (this.nome.length < 3) {
@@ -41,6 +38,11 @@ export default class ProdutosModel {
         if (!categoriasValidas.includes(this.categoria)) {
              throw new Error(`Categoria inválida. Use uma das categorias válidas: ${categoriasValidas}`);
         }
+    }
+
+    async criar() {
+
+        this.validar()
 
         const registro = await prisma.produtos.create({
             data: {
@@ -57,9 +59,18 @@ export default class ProdutosModel {
     }
 
     async atualizar() {
-        return prisma.exemplo.update({
+
+        this.validar()
+
+        return prisma.produtos.update({
             where: { id: this.id },
-            data: { nome: this.nome, estatus: this.estatus, preco: this.preco },
+            data: { 
+                nome: this.nome,
+                descricao: this.descricao,
+                categoria: this.categoria,
+                preco: this.preco,
+                disponivel: this.disponivel
+             },
         });
     }
 

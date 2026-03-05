@@ -103,21 +103,32 @@ export const atualizar = async (req, res) => {
             return res.status(400).json({ error: 'Corpo da requisição vazio. Envie os dados!' });
         }
 
-        const exemplo = await ExemploModel.buscarPorId(parseInt(id));
+        const produtos = await ProdutosModel.buscarPorId(parseInt(id));
 
-        if (!exemplo) {
+        if (!produtos) {
             return res.status(404).json({ error: 'Registro não encontrado para atualizar.' });
         }
 
-        if (req.body.nome !== undefined) exemplo.nome = req.body.nome;
-        if (req.body.estatus !== undefined) exemplo.estatus = req.body.estatus;
-        if (req.body.preco !== undefined) exemplo.preco = parseFloat(req.body.preco);
+        if (req.body.nome !== undefined) produtos.nome = req.body.nome;
+        if (req.body.descricao !== undefined) produtos.descricao = req.body.descricao;
+        if (req.body.categoria !== undefined) produtos.categoria = req.body.categoria;
+        if (req.body.preco !== undefined) produtos.preco = parseFloat(req.body.preco);
+        if (req.body.disponivel !== undefined) produtos.disponivel = req.body.disponivel
 
-        const data = await exemplo.atualizar();
+        const data = await produtos.atualizar();
 
         res.json({ message: `O registro "${data.nome}" foi atualizado com sucesso!`, data });
     } catch (error) {
         console.error('Erro ao atualizar:', error);
+
+        if (error.message) {
+            return res.status(400).json({
+                status: 400,
+                error: "Erro de validação",
+                message: error.message
+            })
+        }
+
         res.status(500).json({ error: 'Erro ao atualizar registro.' });
     }
 };
