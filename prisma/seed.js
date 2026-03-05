@@ -13,7 +13,7 @@ async function main() {
 
     // 🔥 Limpa tudo e reinicia os IDs corretamente
     await prisma.$executeRawUnsafe(`
-    TRUNCATE TABLE "itemPedido", "pedido", "cliente", "produto"
+    TRUNCATE TABLE "itemPedido", "pedidos", "cliente", "produtos"
     RESTART IDENTITY CASCADE;
   `);
 
@@ -45,7 +45,7 @@ async function main() {
     });
 
     console.log('📦 Inserindo produtos...');
-    await prisma.produto.createMany({
+    await prisma.produtos.createMany({
         data: [
             {
                 nome: 'Hambúrguer Clássico',
@@ -79,7 +79,7 @@ async function main() {
     });
 
     console.log('📦 Inserindo pedidos...');
-    await prisma.pedido.createMany({
+    await prisma.pedidos.createMany({
         data: [
             {
                 clienteId: 1,
