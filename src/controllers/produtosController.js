@@ -8,6 +8,8 @@ export const criar = async (req, res) => {
 
         const { nome, descricao, categoria, preco, disponivel } = req.body;
 
+        //Campos obrigatórios
+
         if (!nome) return res.status(400).json({
             status: 400,
             error: 'O campo "nome" é obrigatório!'
@@ -25,10 +27,10 @@ export const criar = async (req, res) => {
             status: 400,
             error: 'O campo "categoria" é obrigatório'
         })
-        if (!disponivel || disponivel === null || disponivel === undefined) return res.status(400).json({
+        if (disponivel === null || disponivel === undefined) return res.status(400).json({
             status: 400,
             error: 'O campo "disponível" é obrigatório'
-        })
+        }) 
 
         const produtos = new ProdutosModel({
             nome,
@@ -42,6 +44,15 @@ export const criar = async (req, res) => {
         res.status(201).json({ message: 'Registro criado com sucesso!', data });
     } catch (error) {
         console.error('Erro ao criar:', error);
+
+        if (error.message) {
+            return res.status(400).json({
+                status: 400,
+                error: "Erro de validação",
+                message: error.message
+            })
+        }
+
         res.status(500).json({ error: 'Erro interno ao salvar o registro.' });
     }
 };

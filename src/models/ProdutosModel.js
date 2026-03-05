@@ -1,5 +1,10 @@
 import prisma from '../utils/prismaClient.js';
 
+//Categorias válias
+        const categoriasValidas = ["LANCHE", "BEBIDA", 'SOBREMESA', "COMBO"]
+
+class ValidationError extends Error {}
+
 export default class ProdutosModel {
     constructor({
         id = null,
@@ -19,20 +24,31 @@ export default class ProdutosModel {
 
     async criar() {
 
+        //Regras de negócio
+
+        if (this.nome.length < 3) {
+            throw new Error('O nome deve ter no mínimo 3 caracteres')
+        }
+        if (this.descricao.length > 255) {
+            throw new Error('A descrição deve ter no máximo 255 caracteres')
+        }
         if (this.preco <= 0) {
             throw new Error('O preco deve ser maior que 0');
         }
-        if (this.disponivel === false) {
-            throw new Error('Produto não pode ser adicionado com disponivel = false');
+        if (!Number.isInteger(this.preco * 100)) {
+            throw new Error('O preco deve ser um número e ter no máximo duas casas decimais');
+        }
+        if (!categoriasValidas.includes(this.categoria)) {
+             throw new Error(`Categoria inválida. Use uma das categorias válidas: ${categoriasValidas}`);
         }
 
-        const registro = await prisma.produto.create({
+        const registro = await prisma.produtos.create({
             data: {
                 nome: this.nome,
                 descricao: this.descricao,
                 categoria: this.categoria,
                 preco: this.preco,
-                disponivel: this.disponivel,
+                disponivel: this.disponivel
             },
         });
 
