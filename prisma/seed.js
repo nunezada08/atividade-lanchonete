@@ -11,7 +11,6 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
     console.log('🌱 Iniciando seed...');
 
-    // 🔥 Limpa tudo e reinicia os IDs corretamente
     await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE "itemPedido", "pedidos", "cliente", "produtos"
     RESTART IDENTITY CASCADE;
@@ -116,7 +115,6 @@ async function main() {
                 precoUnitario: '9.90',
             },
 
-            // Pedido 2
             {
                 pedidoId: 2,
                 produtoId: 4,
@@ -124,7 +122,6 @@ async function main() {
                 precoUnitario: '25.00',
             },
 
-            // Pedido 3
             {
                 pedidoId: 3,
                 produtoId: 3,

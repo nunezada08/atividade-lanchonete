@@ -46,7 +46,7 @@ export default class ClienteModel {
 
     // Regra de Negócio, pedido tem que estar fechado para deletar
     async deletar() {
-        const pedidoAberto = await prisma.pedido.findFirst({
+        const pedidoAberto = await prisma.pedidos.findFirst({
             where: {
                 clienteId: this.id,
                 status: 'ABERTO',
