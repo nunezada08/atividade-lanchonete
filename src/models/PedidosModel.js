@@ -10,7 +10,7 @@ export default class PedidoModel {
 
     async criar() {
         // novos pedidos sempre iniciam em ABERTO e total 0, ignorando valores passados
-        return prisma.pedido.create({
+        return prisma.pedidos.create({
             data: {
                 cliente: this.cliente,
                 status: 'ABERTO',
@@ -26,14 +26,14 @@ export default class PedidoModel {
         if (this.status !== undefined) data.status = this.status;
         if (this.total !== undefined) data.total = this.total;
 
-        return prisma.pedido.update({
+        return prisma.pedidos.update({
             where: { id: this.id },
             data,
         });
     }
 
     async deletar() {
-        return prisma.pedido.delete({ where: { id: this.id } });
+        return prisma.pedidos.delete({ where: { id: this.id } });
     }
 
     static async buscarTodos(filtros = {}) {
@@ -43,17 +43,17 @@ export default class PedidoModel {
         if (filtros.status) where.status = filtros.status; // espera 'ABERTO','PAGO' ou 'CANCELADO'
         if (filtros.total !== undefined) where.total = parseFloat(filtros.total);
 
-        return prisma.pedido.findMany({ where });
+        return prisma.pedidos.findMany({ where });
     }
 
     static async buscarPorId(id) {
-        const data = await prisma.pedido.findUnique({ where: { id } });
+        const data = await prisma.pedidos.findUnique({ where: { id } });
         if (!data) return null;
         return new PedidoModel(data);
     }
 
     /**
-     * Recalcula o total do pedido somando todos os itens associados.
+     * Recalcula o total do pedidos somando todos os itens associados.
      * Atualiza a coluna no banco.
      */
     static async calcularTotal(pedidoId) {
@@ -62,7 +62,7 @@ export default class PedidoModel {
             return acc + parseFloat(item.precoUnitario) * item.quantidade;
         }, 0);
 
-        const atualizado = await prisma.pedido.update({
+        const atualizado = await prisma.pedidos.update({
             where: { id: pedidoId },
             data: { total: total.toFixed(2) },
         });
@@ -78,7 +78,7 @@ export default class PedidoModel {
             pedidoAtual.status !== 'ABERTO'
         ) {
             throw new Error(
-                'Só é possível alterar o status para PAGO ou CANCELADO quando o pedido estiver ABERTO.',
+                'Só é possível alterar o status para PAGO ou CANCELADO quando o pedidos estiver ABERTO.',
             );
         }
     }
