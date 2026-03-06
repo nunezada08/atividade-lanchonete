@@ -29,7 +29,7 @@ model Cliente {
 model Produtos {
     id          Int      @id @default(autoincrement())
     nome        String
-    descricao   String
+    descricao   String   @db.VarChar(255)
     categoria   TipoCategoria
     preco       Decimal  @db.Decimal(10,2)
     disponivel  Boolean  @default(true)
