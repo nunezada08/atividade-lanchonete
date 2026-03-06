@@ -115,15 +115,10 @@ export const atualizar = async (req, res) => {
     } catch (error) {
         console.error('Erro ao atualizar:', error);
 
-        if (error.message) {
-            return res.status(400).json({
-                status: 400,
-                error: 'Erro de validação',
-                message: error.message,
-            });
-        }
-
-        res.status(500).json({ error: 'Erro ao atualizar registro.' });
+        res.status(500).json({
+            error: 'Erro ao atualizar registro.',
+            message: error.message,
+        });
     }
 };
 
@@ -148,13 +143,9 @@ export const deletar = async (req, res) => {
     } catch (error) {
         console.error('Erro ao deletar:', error);
 
-        if (error.message) {
-            return res.status(400).json({
-                status: 400,
-                error: error.message,
-            });
-        }
-
-        res.status(500).json({ error: 'Erro ao deletar registro.' });
+        res.status(500).json({
+            error: 'Erro ao deletar registro.',
+            message: error.message,
+        });
     }
 };
