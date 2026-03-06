@@ -8,52 +8,46 @@ export const criar = async (req, res) => {
 
         const { nome, descricao, categoria, preco, disponivel } = req.body;
 
-        //Campos obrigatórios
+        if (!nome)
+            return res.status(400).json({
+                error: 'O campo "nome" é obrigatório!',
+            });
 
-        if (!nome) return res.status(400).json({
-            status: 400,
-            error: 'O campo "nome" é obrigatório!'
-        });
-        if (preco === undefined || preco === null) return res.status(400).json({
-            status: 400,
-            error: 'O campo "preco" é obrigatório!'
-        });
+        if (preco === undefined || preco === null)
+            return res.status(400).json({
+                error: 'O campo "preco" é obrigatório!',
+            });
         if (!descricao)
             return res.status(400).json({
-                status: 400,
                 error: 'O campo "descricao" é obrigatório',
             });
-        if (!categoria) return res.status(400).json({
-            status: 400,
-            error: 'O campo "categoria" é obrigatório'
-        })
-        if (disponivel === null || disponivel === undefined) return res.status(400).json({
-            status: 400,
-            error: 'O campo "disponível" é obrigatório'
-        }) 
+
+        if (!categoria) return res.status(400).json({ error: 'O campo "categoria" é obrigatório' });
+
+        if (disponivel === null || disponivel === undefined)
+            return res.status(400).json({
+                status: 400,
+                error: 'O campo "disponível" é obrigatório',
+            });
 
         const produtos = new ProdutosModel({
             nome,
             descricao,
             categoria,
             preco: parseFloat(preco),
-            disponivel
+            disponivel,
         });
+
         const data = await produtos.criar();
 
         res.status(201).json({ message: 'Registro criado com sucesso!', data });
     } catch (error) {
         console.error('Erro ao criar:', error);
 
-        if (error.message) {
-            return res.status(400).json({
-                status: 400,
-                error: "Erro de validação",
-                message: error.message
-            })
-        }
-
-        res.status(500).json({ error: 'Erro interno ao salvar o registro.' });
+        res.status(500).json({
+            error: 'Erro interno ao salvar o registro.',
+            message: error.message,
+        });
     }
 };
 
@@ -113,7 +107,7 @@ export const atualizar = async (req, res) => {
         if (req.body.descricao !== undefined) produtos.descricao = req.body.descricao;
         if (req.body.categoria !== undefined) produtos.categoria = req.body.categoria;
         if (req.body.preco !== undefined) produtos.preco = parseFloat(req.body.preco);
-        if (req.body.disponivel !== undefined) produtos.disponivel = req.body.disponivel
+        if (req.body.disponivel !== undefined) produtos.disponivel = req.body.disponivel;
 
         const data = await produtos.atualizar();
 
@@ -124,9 +118,9 @@ export const atualizar = async (req, res) => {
         if (error.message) {
             return res.status(400).json({
                 status: 400,
-                error: "Erro de validação",
-                message: error.message
-            })
+                error: 'Erro de validação',
+                message: error.message,
+            });
         }
 
         res.status(500).json({ error: 'Erro ao atualizar registro.' });
@@ -147,15 +141,18 @@ export const deletar = async (req, res) => {
 
         await produto.deletar();
 
-        res.json({ message: `O registro "${produto.nome}" foi deletado com sucesso!`, deletado: produto });
+        res.json({
+            message: `O registro "${produto.nome}" foi deletado com sucesso!`,
+            deletado: produto,
+        });
     } catch (error) {
         console.error('Erro ao deletar:', error);
 
         if (error.message) {
             return res.status(400).json({
                 status: 400,
-                error: error.message
-            })
+                error: error.message,
+            });
         }
 
         res.status(500).json({ error: 'Erro ao deletar registro.' });
