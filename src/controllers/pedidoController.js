@@ -9,9 +9,8 @@ export const criar = async (req, res) => {
         const { cliente } = req.body;
 
         if (!cliente) return res.status(400).json({ error: 'O campo "cliente" é obrigatório!' });
-        // status e total não são aceitos pela API de criação; são controlados internamente
 
-        const pedido = new PedidoModel({ cliente });
+        const pedido = new PedidoModel({ clienteId: cliente });
         const data = await pedido.criar();
 
         res.status(201).json({ message: 'Registro criado com sucesso!', data });
@@ -94,22 +93,18 @@ export const atualizar = async (req, res) => {
             return res.status(404).json({ error: 'Pedido não encontrado para atualizar.' });
         }
 
-        if (req.body.cliente !== undefined) pedido.cliente = req.body.cliente;
+        if (req.body.cliente !== undefined) pedido.clienteId = req.body.cliente;
 
         if (req.body.status !== undefined) {
-            // valida transição permitida
             PedidoModel.validarMudancaStatus(pedido, req.body.status);
             pedido.status = req.body.status;
         }
 
-        // total não pode ser atualizado manualmente
-
         const data = await pedido.atualizar();
 
-        // sempre recalcula total após alterações para garantia
         await PedidoModel.calcularTotal(pedido.id);
 
-        res.json({ message: `O pedido "${data.cliente}" foi atualizado com sucesso!`, data });
+        res.json({ message: `O pedido "${pedido.id}" foi atualizado com sucesso!`, data });
     } catch (error) {
         console.error('Erro ao atualizar:', error);
         res.status(500).json({ error: 'Erro ao atualizar pedido.' });
@@ -128,7 +123,6 @@ export const deletar = async (req, res) => {
             return res.status(404).json({ error: 'Registro não encontrado para deletar.' });
         }
 
-        // opcional: permitir exclusão somente se aberto
         if (pedido.status !== 'ABERTO') {
             return res.status(400).json({ error: 'Só é possível deletar pedidos em aberto.' });
         }
