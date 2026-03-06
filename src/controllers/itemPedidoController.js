@@ -1,13 +1,13 @@
 import ItemPedidoModel from '../models/ItemPedidoModel.js';
+import PedidoModel from '../models/PedidosModel.js';
 
 export const criar = async (req, res) => {
     try {
-
         const { pedidoId, produtoId, quantidade } = req.body;
 
         if (!pedidoId || !produtoId || !quantidade) {
             return res.status(400).json({
-                error: 'Os campos pedidoId, produtoId e quantidade são obrigatórios!'
+                error: 'Os campos pedidoId, produtoId e quantidade são obrigatórios!',
             });
         }
 
@@ -15,15 +15,12 @@ export const criar = async (req, res) => {
         const data = await item.criar();
 
         res.status(201).json(data);
-
     } catch (error) {
         res.status(400).json({
-            error: error.message
+            error: error.message,
         });
     }
-
 };
-
 
 export const buscarTodos = async (req, res) => {
     try {
@@ -34,7 +31,6 @@ export const buscarTodos = async (req, res) => {
         }
 
         res.status(200).json(registros);
-
     } catch (error) {
         console.error('Erro ao buscar:', error);
         res.status(500).json({ error: 'Erro ao buscar itens.' });
@@ -47,7 +43,7 @@ export const buscarPorId = async (req, res) => {
 
         if (isNaN(id)) {
             return res.status(400).json({
-                error: 'O ID enviado não é um número válido.'
+                error: 'O ID enviado não é um número válido.',
             });
         }
 
@@ -55,16 +51,15 @@ export const buscarPorId = async (req, res) => {
 
         if (!item) {
             return res.status(404).json({
-                error: 'ItemPedido não encontrado.'
+                error: 'ItemPedido não encontrado.',
             });
         }
 
         res.status(200).json(item);
-
     } catch (error) {
         console.error('Erro ao buscar:', error);
         res.status(500).json({
-            error: 'Erro ao buscar item.'
+            error: 'Erro ao buscar item.',
         });
     }
 };
@@ -75,7 +70,7 @@ export const atualizar = async (req, res) => {
 
         if (isNaN(id)) {
             return res.status(400).json({
-                error: 'ID inválido.'
+                error: 'ID inválido.',
             });
         }
 
@@ -84,15 +79,17 @@ export const atualizar = async (req, res) => {
             return res.status(404).json({ error: 'Item não encontrado.' });
         }
 
-        // verifica se o pedido ainda está aberto
         const pedido = await PedidoModel.buscarPorId(existente.pedidoId);
         if (pedido && pedido.status !== 'ABERTO') {
-            return res.status(400).json({ error: 'Não é possível alterar itens de um pedido que não esteja ABERTO.' });
+            return res.status(400).json({
+                error: 'Não é possível alterar itens de um pedido que não esteja ABERTO.',
+            });
         }
 
         const item = new ItemPedidoModel({
             id,
-            quantidade: req.body.quantidade !== undefined ? req.body.quantidade : existente.quantidade,
+            quantidade:
+                req.body.quantidade !== undefined ? req.body.quantidade : existente.quantidade,
             precoUnitario: existente.precoUnitario,
         });
 
@@ -101,16 +98,14 @@ export const atualizar = async (req, res) => {
 
         res.status(200).json({
             message: 'Item atualizado com sucesso!',
-            data
+            data,
         });
     } catch (error) {
         res.status(400).json({
-            error: error.message
+            error: error.message,
         });
     }
 };
-
-
 
 export const deletar = async (req, res) => {
     try {
@@ -124,10 +119,11 @@ export const deletar = async (req, res) => {
             return res.status(404).json({ error: 'Item não encontrado para deletar.' });
         }
 
-        // verifica status do pedido antes de apagar o item
         const pedido = await PedidoModel.buscarPorId(item.pedidoId);
-        if (pedido && pedido.status !== 'ABERTO') {
-            return res.status(400).json({ error: 'Não é possível remover itens de um pedido que não esteja ABERTO.' });
+        if (pedido && (pedido.status === 'PAGO' || pedido.status === 'CANCELADO')) {
+            return res
+                .status(400)
+                .json({ error: 'Não é possível remover itens de um pedido PAGO ou CANCELADO.' });
         }
 
         await item.deletar();
