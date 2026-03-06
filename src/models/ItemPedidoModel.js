@@ -1,7 +1,13 @@
 import prisma from '../utils/prismaClient.js';
 
 export default class ItemPedidoModel {
-    constructor({ id = null, pedidoId = null, produtoId = null, quantidade = 0, precoUnitario = null } = {}) {
+    constructor({
+        id = null,
+        pedidoId = null,
+        produtoId = null,
+        quantidade = 0,
+        precoUnitario = null,
+    } = {}) {
         this.id = id;
         this.pedidoId = pedidoId;
         this.produtoId = produtoId;
@@ -9,7 +15,35 @@ export default class ItemPedidoModel {
         this.precoUnitario = precoUnitario;
     }
 
+    // Regras de Negócio — ItemPedido
+    async validar(operacao = 'criar') {
+        // Validar quantidade: maior que 0 e no máximo 99
+        if (this.quantidade <= 0 || this.quantidade > 99) {
+            throw new Error('A quantidade deve ser maior que 0 e no máximo 99');
+        }
+
+        // Validar se produto existe e está disponível
+        const produto = await prisma.produtos.findUnique({
+            where: { id: this.produtoId },
+        });
+
+        if (!produto) {
+            throw new Error('Produto não encontrado');
+        }
+
+        if (!produto.disponivel) {
+            throw new Error('Não é possível adicionar produto indisponível ao pedido');
+        }
+
+        // Se for criação, armazenar preço do produto no momento da inserção
+        if (operacao === 'criar') {
+            this.precoUnitario = produto.preco;
+        }
+    }
+
     async criar() {
+        await this.validar('criar');
+
         return prisma.itemPedido.create({
             data: {
                 pedidoId: this.pedidoId,
@@ -21,6 +55,8 @@ export default class ItemPedidoModel {
     }
 
     async atualizar() {
+        await this.validar('atualizar');
+
         const data = {};
         if (this.quantidade !== undefined) data.quantidade = this.quantidade;
         if (this.precoUnitario !== undefined) data.precoUnitario = this.precoUnitario;
