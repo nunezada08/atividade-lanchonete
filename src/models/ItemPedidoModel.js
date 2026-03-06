@@ -38,7 +38,6 @@ export default class ItemPedidoModel {
     static async buscarTodos(filtros = {}) {
         const where = {};
         if (filtros.pedidoId) where.pedidoId = parseInt(filtros.pedidoId);
-        if (filtros.produtoId) where.produtoId = parseInt(filtros.produtoId);
         return prisma.itemPedido.findMany({ where });
     }
 
