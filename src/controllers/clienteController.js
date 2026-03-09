@@ -1,15 +1,5 @@
 import ClienteModel from "../models/clienteModel.js";
-
-const buscarEnderecoNoViaCep = async (cep) => {
-  if (!cep || cep.length < 8) return null;
-  try {
-    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-    const data = await response.json();
-    return data.erro ? null : data;
-  } catch (error) {
-    throw new Error("VIA_CEP_OFFLINE");
-  }
-};
+import buscarEnderecoNoViaCep from '../utils/viaCep.js';
 
 export const criar = async (req, res) => {
   try {
@@ -34,13 +24,13 @@ export const criar = async (req, res) => {
       return res.status(400).json({ error: "E-mail inválido! Deve conter '@' e '.'" });
     }
 
-    // 4. Regra: CPF (Exatamente 11 números - Limpeza sem Regex)
+    // 4. Regra: CPF (Exatamente 11 números)
     const cpfLimpo = cpf.split('').filter(char => char >= '0' && char <= '9').join('');
     if (cpfLimpo.length !== 11) {
       return res.status(400).json({ error: "O CPF deve ter exatamente 11 números." });
     }
 
-    // 5. Regra: Telefone (10 ou 11 números - Limpeza sem Regex)
+    // 5. Regra: Telefone (10 ou 11 números)
     const telLimpo = telefone.split('').filter(char => char >= '0' && char <= '9').join('');
     if (telLimpo.length < 10 || telLimpo.length > 11) {
       return res.status(400).json({ error: "O telefone deve ter 10 ou 11 números." });
