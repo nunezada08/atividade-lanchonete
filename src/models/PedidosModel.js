@@ -8,7 +8,6 @@ export default class PedidoModel {
     this.total = total;
   }
 
-
   static async validarClienteAtivo(clienteId) {
     const cliente = await prisma.cliente.findUnique({
       where: { id: Number(clienteId) }
