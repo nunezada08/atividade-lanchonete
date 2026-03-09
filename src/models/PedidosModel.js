@@ -1,91 +1,97 @@
 import prisma from '../utils/prismaClient.js';
 
 export default class PedidoModel {
-    constructor({ id = null, clienteId = null, status = 'ABERTO', total = 0, cliente = null } = {}) {
-        this.id = id;
-        this.clienteId = clienteId;
-        this.status = status;
-        this.total = total;
-        this.cliente = cliente;
+  constructor({ id = null, clienteId = null, status = 'ABERTO', total = 0 } = {}) {
+    this.id = id;
+    this.clienteId = clienteId;
+    this.status = status;
+    this.total = total;
+  }
+
+
+  static async validarClienteAtivo(clienteId) {
+    const cliente = await prisma.cliente.findUnique({
+      where: { id: Number(clienteId) }
+    });
+
+    if (!cliente) throw new Error('Cliente não encontrado');
+
+    if (!cliente.ativo) {
+      throw new Error('Não é possível criar pedido para cliente inativo');
     }
+    return cliente;
+  }
 
-    async criar() {
-        // ensure clienteId is a number so Prisma can link correctly
-        const clienteId = Number(this.clienteId);
-        return prisma.pedidos.create({
-            data: {
-                // connect via relation instead of setting the foreign key directly
-                cliente: { connect: { id: clienteId } },
-                status: this.status || 'ABERTO',
-                total: 0,
-            },
-            include: { cliente: true }, // return the related cliente object
-        });
+  static async validarEstadoParaAlteracao(pedidoId) {
+    const pedido = await prisma.pedidos.findUnique({ where: { id: Number(pedidoId) } });
+    if (!pedido) throw new Error('Pedido não encontrado');
+
+    if (pedido.status !== 'ABERTO') {
+      throw new Error(`Operação não permitida: O pedido está com status ${pedido.status}`);
     }
-
-    async atualizar() {
-        const data = {};
-        if (this.clienteId !== undefined) {
-            // convert and connect to maintain relational integrity
-            data.cliente = { connect: { id: Number(this.clienteId) } };
-        }
-        if (this.status !== undefined) data.status = this.status;
-        if (this.total !== undefined) data.total = this.total;
-
-        return prisma.pedidos.update({
-            where: { id: this.id },
-            data,
-            include: { cliente: true },
-        });
-    }
-
-    async deletar() {
-        return prisma.pedidos.delete({ where: { id: this.id } });
-    }
-
-    static async buscarTodos(filtros = {}) {
-        const where = {};
-
-        if (filtros.cliente)
-            where.cliente = { nome: { contains: filtros.cliente, mode: 'insensitive' } };
-        if (filtros.status) where.status = filtros.status;
-        if (filtros.total !== undefined) where.total = parseFloat(filtros.total);
-
-        // always include the cliente relation so callers can see the linked customer
-        return prisma.pedidos.findMany({ where, include: { cliente: true } });
-    }
-
-    static async buscarPorId(id) {
-        const data = await prisma.pedidos.findUnique({
-            where: { id },
-            include: { cliente: true },
-        });
-        if (!data) return null;
-        return new PedidoModel(data);
-    }
-
-    static async calcularTotal(pedidoId) {
-        const itens = await prisma.itemPedido.findMany({ where: { pedidoId } });
-        const total = itens.reduce((acc, item) => {
-            return acc + parseFloat(item.precoUnitario) * item.quantidade;
-        }, 0);
-
-        const atualizado = await prisma.pedidos.update({
-            where: { id: pedidoId },
-            data: { total: Number(total.toFixed(2)) },
-        });
-        return atualizado.total;
-    }
+    return pedido;
+  }
 
 
-    static validarMudancaStatus(pedidoAtual, novoStatus) {
-        if (
-            (novoStatus === 'CANCELADO' || novoStatus === 'PAGO') &&
-            pedidoAtual.status !== 'ABERTO'
-        ) {
-            throw new Error(
-                'Só é possível alterar o status para PAGO ou CANCELADO quando o pedido estiver ABERTO.',
-            );
-        }
-    }
+  async criar() {
+
+    await PedidoModel.validarClienteAtivo(this.clienteId);
+
+    return prisma.pedidos.create({
+      data: {
+        clienteId: Number(this.clienteId),
+        status: 'ABERTO',
+        total: 0
+      },
+      include: { cliente: true }
+    });
+  }
+
+  static async calcularTotal(pedidoId) {
+
+    const itens = await prisma.itemPedido.findMany({
+      where: { pedidoId: Number(pedidoId) }
+    });
+
+    const totalCalculado = itens.reduce((acc, item) => {
+      return acc + (parseFloat(item.precoUnitario) * item.quantidade);
+    }, 0);
+
+    return prisma.pedidos.update({
+      where: { id: Number(pedidoId) },
+      data: { total: Number(totalCalculado.toFixed(2)) }
+    });
+  }
+
+  static async cancelar(pedidoId) {
+
+    await PedidoModel.validarEstadoParaAlteracao(pedidoId);
+
+    return prisma.pedidos.update({
+      where: { id: Number(pedidoId) },
+      data: { status: 'CANCELADO' }
+    });
+  }
+
+  static async pagar(pedidoId) {
+
+    await PedidoModel.validarEstadoParaAlteracao(pedidoId);
+
+    return prisma.pedidos.update({
+      where: { id: Number(pedidoId) },
+      data: { status: 'PAGO' }
+    });
+  }
+
+
+  static async buscarTodos() {
+    return prisma.pedidos.findMany({ include: { cliente: true, itens: true } });
+  }
+
+  static async buscarPorId(id) {
+    return prisma.pedidos.findUnique({
+      where: { id: Number(id) },
+      include: { cliente: true, itens: true }
+    });
+  }
 }

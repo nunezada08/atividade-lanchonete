@@ -16,12 +16,6 @@ export const criar = async (req, res) => {
             error: 'Pedido não encontrado.'
         });
 
-        if (pedido.status !== 'ABERTO') {
-            return res.status(400).json({
-                error: 'Não é possível adicionar itens a um pedido PAGO ou CANCELADO'
-            });
-        }
-
 
         const item = new ItemPedidoModel({ pedidoId, produtoId, quantidade });
 
@@ -92,13 +86,6 @@ export const atualizar = async (req, res) => {
         const existente = await ItemPedidoModel.buscarPorId(parseInt(id));
         if (!existente) {
             return res.status(404).json({ error: 'Item não encontrado.' });
-        }
-
-        const pedido = await PedidoModel.buscarPorId(existente.pedidoId);
-        if (pedido && pedido.status !== 'ABERTO') {
-            return res.status(400).json({
-                error: 'Não é possível alterar itens de um pedido que não esteja ABERTO.',
-            });
         }
 
         const item = new ItemPedidoModel({

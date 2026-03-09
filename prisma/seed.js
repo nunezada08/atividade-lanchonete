@@ -101,7 +101,7 @@ async function main() {
     console.log('📦 Inserindo itens dos pedidos...');
     await prisma.itemPedido.createMany({
         data: [
-            // Pedido 1
+            
             {
                 pedidoId: 1,
                 produtoId: 1,
