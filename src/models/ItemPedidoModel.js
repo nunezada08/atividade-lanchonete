@@ -23,24 +23,23 @@ export default class ItemPedidoModel {
         }
 
         // Validar se produto existe e está disponível
+        if(this.produto){
         const produto = await prisma.produtos.findUnique({
             where: { id: this.produtoId },
         });
 
-        if (!produto) {
-            throw new Error('Produto não encontrado');
-        }
+            if (!produto)
+                throw new Error('Produto não encontrado');
 
-        if (!produto.disponivel) {
-            throw new Error('Não é possível adicionar produto indisponível ao pedido');
-        }
+                if (!produto.disponivel) 
+                    throw new Error('Não é possível adicionar produto indisponível ao pedido');
 
-        // Se for criação, armazenar preço do produto no momento da inserção
-        if (operacao === 'criar') {
-            this.precoUnitario = produto.preco;
-        }
-    }
-
+                    // Se for criação, armazenar preço do produto no momento da inserção
+                    if (operacao === 'criar') {
+                        this.precoUnitario = produto.preco;
+                    }
+                }
+            }
     async criar() {
         await this.validar('criar');
 

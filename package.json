@@ -1,17 +1,25 @@
 {
   "name": "lanchonete-poo",
   "version": "1.0.0",
-  "description": "Atividade utilizando uma API integrada",
-  "main": "server.js",
-  "type": "module",
   "private": true,
+  "description": "Atividade utilizando uma API integrada",
+  "keywords": [],
+  "homepage": "https://github.com/nunezada08/atividade-lanchonete#readme",
+  "bugs": {
+    "url": "https://github.com/nunezada08/atividade-lanchonete/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nunezada08/atividade-lanchonete.git"
+  },
+  "license": "MIT",
+  "author": "Nunes/Melissa/Juia/Murilo/Isabella/Felipe",
+  "type": "module",
+  "main": "server.js",
   "scripts": {
     "dev": "cls && nodemon src/server.js",
     "seed": "prisma db seed"
   },
-  "keywords": [],
-  "author": "Nunes/Melissa/Juia/Murilo/Isabella/Felipe",
-  "license": "MIT",
   "dependencies": {
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
@@ -22,13 +30,5 @@
   "devDependencies": {
     "nodemon": "^3.1.14",
     "prisma": "^7.3.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nunezada08/atividade-lanchonete.git"
-  },
-  "bugs": {
-    "url": "https://github.com/nunezada08/atividade-lanchonete/issues"
-  },
-  "homepage": "https://github.com/nunezada08/atividade-lanchonete#readme"
+  }
 }
