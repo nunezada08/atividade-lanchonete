@@ -1,32 +1,41 @@
 import prisma from '../utils/prismaClient.js';
 
 export default class PedidoModel {
-    constructor({ id = null, clienteId = null, status = 'ABERTO', total = 0 } = {}) {
+    constructor({ id = null, clienteId = null, status = 'ABERTO', total = 0, cliente = null } = {}) {
         this.id = id;
         this.clienteId = clienteId;
         this.status = status;
         this.total = total;
+        this.cliente = cliente;
     }
 
     async criar() {
+        // ensure clienteId is a number so Prisma can link correctly
+        const clienteId = Number(this.clienteId);
         return prisma.pedidos.create({
             data: {
-                clienteId: this.cliente,
-                status: 'ABERTO',
+                // connect via relation instead of setting the foreign key directly
+                cliente: { connect: { id: clienteId } },
+                status: this.status || 'ABERTO',
                 total: 0,
             },
+            include: { cliente: true }, // return the related cliente object
         });
     }
 
     async atualizar() {
         const data = {};
-        if (this.clienteId !== undefined) data.clienteId = this.clienteId;
+        if (this.clienteId !== undefined) {
+            // convert and connect to maintain relational integrity
+            data.cliente = { connect: { id: Number(this.clienteId) } };
+        }
         if (this.status !== undefined) data.status = this.status;
         if (this.total !== undefined) data.total = this.total;
 
         return prisma.pedidos.update({
             where: { id: this.id },
             data,
+            include: { cliente: true },
         });
     }
 
@@ -42,11 +51,15 @@ export default class PedidoModel {
         if (filtros.status) where.status = filtros.status;
         if (filtros.total !== undefined) where.total = parseFloat(filtros.total);
 
-        return prisma.pedidos.findMany({ where });
+        // always include the cliente relation so callers can see the linked customer
+        return prisma.pedidos.findMany({ where, include: { cliente: true } });
     }
 
     static async buscarPorId(id) {
-        const data = await prisma.pedidos.findUnique({ where: { id } });
+        const data = await prisma.pedidos.findUnique({
+            where: { id },
+            include: { cliente: true },
+        });
         if (!data) return null;
         return new PedidoModel(data);
     }
@@ -59,14 +72,12 @@ export default class PedidoModel {
 
         const atualizado = await prisma.pedidos.update({
             where: { id: pedidoId },
-            data: { total: total.toFixed(2) },
+            data: { total: Number(total.toFixed(2)) },
         });
         return atualizado.total;
     }
 
-    /**
-     * Valida se a transição de status é permitida.
-     */
+
     static validarMudancaStatus(pedidoAtual, novoStatus) {
         if (
             (novoStatus === 'CANCELADO' || novoStatus === 'PAGO') &&

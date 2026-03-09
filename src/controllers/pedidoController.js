@@ -1,4 +1,5 @@
 import PedidoModel from '../models/PedidosModel.js';
+import ClienteModel from '../models/clienteModel.js';
 
 export const criar = async (req, res) => {
     try {
@@ -6,11 +7,20 @@ export const criar = async (req, res) => {
             return res.status(400).json({ error: 'Corpo da requisição vazio. Envie os dados!' });
         }
 
-        const { cliente } = req.body;
+        // accept either `cliente` or `clienteId` in the body for backwards compatibility
+        const { cliente, clienteId } = req.body;
+        const rawCliente = cliente ?? clienteId;
+        const clienteNum = Number(rawCliente);
 
-        if (!cliente) return res.status(400).json({ error: 'O campo "cliente" é obrigatório!' });
+        if (!rawCliente || isNaN(clienteNum)) {
+            return res.status(400).json({ error: 'ID de cliente inválido. Envie um número válido.' });
+        }
 
-        const pedido = new PedidoModel({ clienteId: cliente });
+        const clienteObj = await ClienteModel.buscarPorId(clienteNum);
+        if (!clienteObj) return res.status(404).json({ error: 'Cliente não encontrado.' });
+        if (clienteObj.ativo === false) return res.status(400).json({ error: 'Não é possível criar pedido para cliente inativo.' });
+
+        const pedido = new PedidoModel({ clienteId });
         const data = await pedido.criar();
 
         res.status(201).json({ message: 'Registro criado com sucesso!', data });
@@ -93,7 +103,7 @@ export const atualizar = async (req, res) => {
             return res.status(404).json({ error: 'Pedido não encontrado para atualizar.' });
         }
 
-        if (req.body.cliente !== undefined) pedido.clienteId = req.body.cliente;
+        if (req.body.cliente !== undefined) pedido.clienteId = Number(req.body.cliente);
 
         if (req.body.status !== undefined) {
             PedidoModel.validarMudancaStatus(pedido, req.body.status);
@@ -130,7 +140,7 @@ export const deletar = async (req, res) => {
         await pedido.deletar();
 
         res.json({
-            message: `O pedido "${pedido.cliente}" foi deletado com sucesso!`,
+            message: `O pedido do cliente "${pedido.cliente ? pedido.cliente.nome : pedido.clienteId}" foi deletado com sucesso!`,
             deletado: pedido,
         });
     } catch (error) {
@@ -138,3 +148,4 @@ export const deletar = async (req, res) => {
         res.status(500).json({ error: 'Erro ao deletar pedido.' });
     }
 };
+
