@@ -80,7 +80,6 @@ export default class ClienteModel {
     static async buscarPorId(id) {
         const clienteId = Number(id);
         if (!clienteId || isNaN(clienteId)) {
-            // invalid identifier, just return null instead of letting Prisma crash
             return null;
         }
         const data = await prisma.cliente.findUnique({ where: { id: clienteId } });
