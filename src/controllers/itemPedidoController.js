@@ -11,8 +11,23 @@ export const criar = async (req, res) => {
             });
         }
 
+        const pedido = await PedidoModel.buscarPorId(pedidoId);
+        if (!pedido) return res.status(404).json({
+            error: 'Pedido não encontrado.'
+        });
+
+        if (pedido.status !== 'ABERTO') {
+            return res.status(400).json({
+                error: 'Não é possível adicionar itens a um pedido PAGO ou CANCELADO'
+            });
+        }
+
+
         const item = new ItemPedidoModel({ pedidoId, produtoId, quantidade });
+
         const data = await item.criar();
+
+        await PedidoModel.calcularTotal(pedidoId);
 
         res.status(201).json(data);
     } catch (error) {
