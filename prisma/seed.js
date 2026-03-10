@@ -38,7 +38,7 @@ async function main() {
                 telefone: '31987654321',
                 email: 'pedro@email.com',
                 cpf: '12345678903',
-                ativo: true,
+                ativo: false,
             },
         ],
     });
@@ -101,7 +101,7 @@ async function main() {
     console.log('📦 Inserindo itens dos pedidos...');
     await prisma.itemPedido.createMany({
         data: [
-            
+
             {
                 pedidoId: 1,
                 produtoId: 1,
