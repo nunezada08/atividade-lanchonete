@@ -85,13 +85,21 @@ export default class PedidoModel {
 
 
   static async buscarTodos() {
-    return prisma.pedidos.findMany({ include: { cliente: true, itens: true } });
+    const pedidos = await prisma.pedidos.findMany({ include: { cliente: true, itensPedidos: true } });
+    return pedidos.map(pedido => ({
+      ...pedido,
+      total: pedido.itensPedidos.reduce((acc, item) => acc + (parseFloat(item.precoUnitario) * item.quantidade), 0).toFixed(2)
+    }));
   }
 
   static async buscarPorId(id) {
-    return prisma.pedidos.findUnique({
+    const pedido = await prisma.pedidos.findUnique({
       where: { id: Number(id) },
-      include: { cliente: true, itens: true }
+      include: { cliente: true, itensPedidos: true }
     });
+    if (pedido) {
+      pedido.total = pedido.itensPedidos.reduce((acc, item) => acc + (parseFloat(item.precoUnitario) * item.quantidade), 0).toFixed(2);
+    }
+    return pedido;
   }
 }
