@@ -3,25 +3,31 @@ import PedidoModel from '../models/PedidosModel.js';
 
 export const criar = async (req, res) => {
     try {
-        const { pedidoId, produtoId, quantidade } = req.body;
+        const { id } = req.params;
+        const { produtoId, quantidade } = req.body;
 
-        if (!pedidoId || !produtoId || !quantidade) {
+        if (!id || !produtoId || !quantidade) {
             return res.status(400).json({
-                error: 'Os campos pedidoId, produtoId e quantidade são obrigatórios!',
+                error: 'Dados incompletos!',
             });
         }
 
-        const pedido = await PedidoModel.buscarPorId(pedidoId);
+        const pedido = await PedidoModel.buscarPorId(parseInt(id));
         if (!pedido) return res.status(404).json({
             error: 'Pedido não encontrado.'
         });
 
+        if (pedido.status !== 'ABERTO') {
+            return res.status(400).json({
+                error: 'Não é possível adicionar itens a um pedido PAGO ou CANCELADO',
+            });
+        }
 
-        const item = new ItemPedidoModel({ pedidoId, produtoId, quantidade });
+        const item = new ItemPedidoModel({ pedidoId: parseInt(id), produtoId, quantidade });
 
         const data = await item.criar();
 
-        await PedidoModel.calcularTotal(pedidoId);
+        await PedidoModel.calcularTotal(parseInt(id));
 
         res.status(201).json(data);
     } catch (error) {
@@ -88,6 +94,13 @@ export const atualizar = async (req, res) => {
             return res.status(404).json({ error: 'Item não encontrado.' });
         }
 
+        const pedido = await PedidoModel.buscarPorId(existente.pedidoId);
+        if (pedido && pedido.status !== 'ABERTO') {
+         return res.status(400).json({
+            error: 'Não é possível alterar itens de um pedido que não esteja ABERTO.',
+            });
+        }
+
         const item = new ItemPedidoModel({
             id,
             quantidade:
@@ -111,29 +124,30 @@ export const atualizar = async (req, res) => {
 
 export const deletar = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { itemId } = req.params;
 
         if (isNaN(id)) return res.status(400).json({ error: 'ID inválido.' });
 
-        const item = await ItemPedidoModel.buscarPorId(parseInt(id));
+        const item = await ItemPedidoModel.buscarPorId(parseInt(itemId));
 
         if (!item) {
             return res.status(404).json({ error: 'Item não encontrado para deletar.' });
         }
 
         const pedido = await PedidoModel.buscarPorId(item.pedidoId);
-        if (pedido && (pedido.status === 'PAGO' || pedido.status === 'CANCELADO')) {
-            return res
-                .status(400)
-                .json({ error: 'Não é possível remover itens de um pedido PAGO ou CANCELADO.' });
+
+        if (pedido && pedido.status !== 'ABERTO') {
+            return res.status(400).json({
+                error: 'Não é possível remover itens de um pedido PAGO ou CANCELADO.',
+            });
         }
 
         await item.deletar();
         await PedidoModel.calcularTotal(item.pedidoId);
 
-        res.json({ message: `O item foi deletado com sucesso!`, deletado: item });
+        res.json({ message: `O item foi deletado com sucesso!` });
     } catch (error) {
-        console.error('Erro ao deletar:', error);
-        res.status(500).json({ error: 'Erro ao deletar item.' });
+        res.status(500).json({
+            error: 'Erro ao deletar item.' });
     }
 };
